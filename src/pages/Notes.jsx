@@ -6,11 +6,26 @@ export default function Notes() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [context, setContext] = useState(null);
   const [recognizedText, setRecognizedText] = useState("");
+  const [canvasWidth, setCanvasWidth] = useState(window.innerWidth);  // dynamic width
+  const [canvasHeight, setCanvasHeight] = useState(window.innerHeight);  // dynamic height
+
+  // Update the canvas size on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setCanvasWidth(window.innerWidth);
+      setCanvasHeight(window.innerHeight);
+    };
+    
+    window.addEventListener("resize", handleResize);
+    
+    // Cleanup the event listener
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = 400;
-    canvas.height = 200;
     const ctx = canvas.getContext("2d");
     ctx.lineCap = "round";
     ctx.strokeStyle = "black";
@@ -18,19 +33,37 @@ export default function Notes() {
     setContext(ctx);
   }, []);
 
+  const getCoordinates = (e) => {
+    let x, y;
+    if (e.touches) {
+      const rect = e.target.getBoundingClientRect();
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.nativeEvent.offsetX;
+      y = e.nativeEvent.offsetY;
+    }
+    return { x, y };
+  };
+
   const startDrawing = (e) => {
+    e.preventDefault();
     setIsDrawing(true);
+    const { x, y } = getCoordinates(e);
     context.beginPath();
-    context.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    context.moveTo(x, y);
   };
 
   const draw = (e) => {
     if (!isDrawing) return;
-    context.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    e.preventDefault();
+    const { x, y } = getCoordinates(e);
+    context.lineTo(x, y);
     context.stroke();
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (e) => {
+    e.preventDefault();
     setIsDrawing(false);
     context.closePath();
   };
@@ -56,10 +89,15 @@ export default function Notes() {
       <canvas
         ref={canvasRef}
         className="border bg-white rounded-md shadow"
+        width={canvasWidth}  // Dynamic width
+        height={canvasHeight}  // Dynamic height
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
         onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
       />
 
       <div className="flex gap-2 mt-4">
