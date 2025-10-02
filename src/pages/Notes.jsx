@@ -68,6 +68,10 @@ export default function Notes() {
     context.closePath();
   };
 
+  const clearCanvasDraw = () => {
+    context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  };
+
   const clearCanvas = () => {
     context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setRecognizedText("");
@@ -77,7 +81,8 @@ export default function Notes() {
     const canvas = canvasRef.current;
     Tesseract.recognize(canvas, "eng")
       .then(({ data: { text } }) => {
-        setRecognizedText(text);
+        setRecognizedText((prev)=> prev+" "+text);
+        clearCanvasDraw()
       })
       .catch((err) => console.error(err));
   };
@@ -86,21 +91,7 @@ export default function Notes() {
     <div className="flex flex-col items-center p-4 bg-gray-100 min-h-screen">
       <h1 className="text-xl font-bold mb-4">✍️ Draw letters → Convert to Text</h1>
 
-      <canvas
-        ref={canvasRef}
-        className="border bg-white rounded-md shadow"
-        width={canvasWidth}  // Dynamic width
-        height={canvasHeight}  // Dynamic height
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-      />
-
-      <div className="flex gap-2 mt-4">
+       <div className="flex gap-2 mt-4">
         <button
           onClick={recognizeText}
           className="px-4 py-2 bg-green-500 text-white rounded-md"
@@ -117,9 +108,25 @@ export default function Notes() {
 
       {recognizedText && (
         <p className="mt-4 p-2 bg-white shadow rounded">
-          Recognized: <b>{recognizedText}</b>
+          <b>{recognizedText}</b>
         </p>
       )}
+
+      <canvas
+        ref={canvasRef}
+        className="border bg-white rounded-md shadow"
+        width={canvasWidth}  // Dynamic width
+        height={canvasHeight}  // Dynamic height
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+      />
+
+     
     </div>
   );
 }
